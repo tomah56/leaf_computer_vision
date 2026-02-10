@@ -8,20 +8,25 @@ import matplotlib.pyplot as plt
 
 
 class Dataset:
-    def __init__(self, dataset: dict[str, list[str]], chart_data: dict[str, int]):
+    def __init__(self, dataset: dict[str, list[str]],
+                chart_data: dict[str, int]):
+
         # dataset dict: key - path to a directory, value - list of valid images
         self.dataset = dataset
+        # chart_data dict: key - directory name, value - amount of valid images
         self.chart_data = chart_data
 
     def show_charts(self):
         fig_pie, ax_pie = plt.subplots()
-        ax_pie.pie(self.chart_data.values(), labels=self.chart_data.keys(), autopct='%1.8f%%')
+        ax_pie.pie(self.chart_data.values(), labels=self.chart_data.keys(),
+                    autopct='%1.8f%%')
         ax_pie.set_title('Plant types')
         fig_pie.canvas.manager.set_window_title('Pie Chart')
 
         fig_bar, ax_bar = plt.subplots()
         colors = plt.cm.tab10(range(len(chart_data)))
-        ax_bar.bar(self.chart_data.keys(), self.chart_data.values(), color=colors)
+        ax_bar.bar(self.chart_data.keys(), self.chart_data.values(),
+                    color=colors)
         ax_bar.set_ylabel('Amount of images')
         ax_bar.set_title('Plant types')
         fig_bar.canvas.manager.set_window_title('Bar Chart')
