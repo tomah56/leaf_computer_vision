@@ -106,8 +106,10 @@ def load_dataset(root_dir) -> tuple[dict[str, list[str]], dict[str, int]]:
 
                     if root not in dataset:
                         dataset[root] = []
-                        chart_data[dir_name] = 0
                     dataset[root].append(file)
+
+                    if dir_name not in chart_data:
+                        chart_data[dir_name] = 0
                     chart_data[dir_name] += 1
 
     return dataset, chart_data
