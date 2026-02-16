@@ -1,0 +1,9 @@
+# Ignore trained model checkpoints
+*.pth
+
+# Ignore training images dataset
+images/
+
+# Python cache
+__pycache__/
+*.pyc
