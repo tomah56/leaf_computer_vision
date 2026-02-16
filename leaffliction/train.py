@@ -68,6 +68,13 @@ def main():
 		avg_acc = running_correct / max(total, 1)
 		print(f"Epoch {epoch + 1}/{epochs} - loss: {avg_loss:.4f} - acc: {avg_acc:.4f}")
 
+torch.save(
+	{
+		"model_state": model.state_dict(),
+		"class_to_idx": dataset.class_to_idx,
+	},
+	"model.pth",
+)
 
 if __name__ == "__main__":
 	main()
