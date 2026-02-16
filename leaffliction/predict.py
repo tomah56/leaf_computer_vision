@@ -37,5 +37,5 @@ def predict_image(image_path: str, model, class_to_idx: dict):
 if __name__ == "__main__":
     model, class_to_idx = load_model("model.pth", num_classes=1 + max(class_to_idx.values()))
     # Replace with your test image path:
-    label = predict_image("images/apple/Apple_scab/your_test.jpg", model, class_to_idx)
+    label = predict_image("images/apple/Apple_rust/image (13).JPG", model, class_to_idx)
     print("Predicted class:", label)
