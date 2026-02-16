@@ -42,3 +42,7 @@ if __name__ == "__main__":
     # Replace with your test image path:
     label = predict_image("images/apple/Apple_rust/image (13).JPG", model, class_to_idx)
     print("Predicted class:", label)
+    label = predict_image("images/apple/Apple_Black_rot/image (37).JPG", model, class_to_idx)
+    print("Predicted class:", label)
+    label = predict_image("images/apple/Apple_healthy/image (39).JPG", model, class_to_idx)
+    print("Predicted class:", label)
