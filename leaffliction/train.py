@@ -4,9 +4,10 @@ import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
+from torchvision.models import ResNet18_Weights
 
 
-data_dir = Path("images")
+data_dir = Path("images/apple")
 epochs = 2
 batch_size = 16
 learning_rate = 1e-3
@@ -36,7 +37,7 @@ def main():
 	)
 
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-	model = models.resnet18(pretrained=True)
+	model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
 	model.fc = nn.Linear(model.fc.in_features, len(dataset.classes))
 	model = model.to(device)
 
