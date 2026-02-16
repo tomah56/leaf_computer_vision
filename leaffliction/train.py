@@ -12,6 +12,7 @@ epochs = 2
 batch_size = 16
 learning_rate = 1e-3
 num_workers = 2
+log_every = 10
 
 
 def main():
@@ -27,6 +28,8 @@ def main():
 	dataset = datasets.ImageFolder(root=str(data_dir), transform=transform)
 	if len(dataset.classes) == 0:
 		raise ValueError("No classes found in the dataset.")
+
+	print(f"Found {len(dataset)} images across {len(dataset.classes)} classes: {dataset.classes}")
 
 	loader = DataLoader(
 		dataset,
@@ -50,7 +53,7 @@ def main():
 		running_correct = 0
 		total = 0
 
-		for images, labels in loader:
+		for batch_idx, (images, labels) in enumerate(loader, start=1):
 			images = images.to(device)
 			labels = labels.to(device)
 
@@ -64,6 +67,12 @@ def main():
 			_, preds = torch.max(outputs, 1)
 			running_correct += (preds == labels).sum().item()
 			total += images.size(0)
+
+			if batch_idx % log_every == 0:
+				print(
+					f"Epoch {epoch + 1}/{epochs} - batch {batch_idx}/{len(loader)} - "
+					f"loss: {loss.item():.4f}"
+				)
 
 		avg_loss = running_loss / max(total, 1)
 		avg_acc = running_correct / max(total, 1)
