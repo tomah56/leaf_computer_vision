@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import sys
 from PIL import Image
@@ -39,7 +41,7 @@ def augment_image(image_path):
     filename = parts[-1]
     name, ext = os.path.splitext(filename)
 
-    save_root = os.path.join("augmented_directory", *folders)
+    save_root = os.path.join("images/augmented_directory", *folders)
     os.makedirs(save_root, exist_ok=True)
 
     image.save(os.path.join(save_root, filename))
