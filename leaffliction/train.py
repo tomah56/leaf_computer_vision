@@ -4,8 +4,10 @@ from pathlib import Path
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader, random_split
-from torchvision import datasets, models, transforms
+from torchvision import datasets, models
 from torchvision.models import ResNet18_Weights
+
+from transformation import get_transforms
 
 
 data_dir = Path("images/apple")
@@ -18,14 +20,7 @@ val_split = 0.2  # 20% of data for validation
 
 
 def main():
-	transform = transforms.Compose(
-		[
-			transforms.Resize((224, 224)),
-			transforms.RandomHorizontalFlip(),
-			transforms.ToTensor(),
-			transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-		]
-	)
+	transform = get_transforms(train=True)
 
 	dataset = datasets.ImageFolder(root=str(data_dir), transform=transform)
 	if len(dataset.classes) == 0:
