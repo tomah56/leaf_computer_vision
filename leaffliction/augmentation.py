@@ -4,6 +4,7 @@ import os
 import sys
 from PIL import Image
 import torchvision.transforms as transforms
+from distribution import is_valid_image
 
 
 augmentations = {
@@ -31,28 +32,31 @@ augmentations = {
 
 
 def augment_image(image_path):
+    try:
+        if not is_valid_image(image_path):
+            print(f"Invalid image: {image_path}")
+        image = Image.open(image_path).convert("RGB")
+        relative_path = os.path.normpath(image_path)
+        parts = relative_path.split(os.sep)
 
-    image = Image.open(image_path).convert("RGB")
+        folders = parts[:-1]
+        filename = parts[-1]
+        name, ext = os.path.splitext(filename)
 
-    relative_path = os.path.normpath(image_path)
-    parts = relative_path.split(os.sep)
+        save_root = os.path.join("images/augmented_directory", *folders)
+        os.makedirs(save_root, exist_ok=True)
 
-    folders = parts[:-1]
-    filename = parts[-1]
-    name, ext = os.path.splitext(filename)
+        image.save(os.path.join(save_root, filename))
 
-    save_root = os.path.join("images/augmented_directory", *folders)
-    os.makedirs(save_root, exist_ok=True)
+        for aug_name, transform in augmentations.items():
+            augmented_img = transform(image)
+            new_filename = f"{name}_{aug_name}{ext}"
+            print(f"new file: {new_filename}")
+            augmented_img.save(os.path.join(save_root, new_filename))
 
-    image.save(os.path.join(save_root, filename))
-
-    for aug_name, transform in augmentations.items():
-        augmented_img = transform(image)
-        new_filename = f"{name}_{aug_name}{ext}"
-        print("new file: " + new_filename)
-        augmented_img.save(os.path.join(save_root, new_filename))
-
-    print("Augmentations saved in:", save_root)
+        print("Augmentations saved in:", save_root)
+    except Exception as e:
+        print(f"Error processing {image_path}: {e}")
 
 
 if __name__ == "__main__":
