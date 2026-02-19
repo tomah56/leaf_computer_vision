@@ -19,9 +19,8 @@ class Dataset:
             key - directory name, value - amount of valid images
     """
 
-
     def __init__(self, dataset: dict[str, list[str]],
-                chart_data: dict[str, int]):
+                 chart_data: dict[str, int]):
         """
         Initialize an Dataset object.
 
@@ -41,7 +40,6 @@ class Dataset:
         if not self.chart_data:
             raise ValueError("Data for chart demonstartion is invalid")
 
-
     def show_charts(self):
         """
         Show pie and bar charts depending on a dataset.
@@ -50,14 +48,14 @@ class Dataset:
         try:
             fig_pie, ax_pie = plt.subplots()
             ax_pie.pie(self.chart_data.values(), labels=self.chart_data.keys(),
-                        autopct='%1.2f%%')
+                       autopct='%1.2f%%')
             ax_pie.set_title('Plant types')
             fig_pie.canvas.manager.set_window_title('Pie Chart')
 
             fig_bar, ax_bar = plt.subplots()
             colors = plt.cm.tab10(range(len(self.chart_data)))
             ax_bar.bar(self.chart_data.keys(), self.chart_data.values(),
-                        color=colors)
+                       color=colors)
             ax_bar.set_ylabel('Amount of images')
             ax_bar.set_title('Plant types')
             fig_bar.canvas.manager.set_window_title('Bar Chart')
