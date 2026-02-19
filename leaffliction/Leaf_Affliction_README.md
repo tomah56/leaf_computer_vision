@@ -77,8 +77,12 @@ This phase explores classical computer vision techniques such as:
 Purpose: - Understand the dataset better - Explore visual
 characteristics of the leaves - Develop intuition about image features
 
-These steps are educational and analytical rather than strictly required
-for model training.
+We can constrain or emphasize certain features by modifying input data, which influences what patterns the model learns.
+
+for example:
+-   Background causes bias → use ROI/mask.
+-   Lighting varies in real life → use ColorJitter.
+-   Leaves rotate naturally → use small rotation.
 
 ------------------------------------------------------------------------
 
