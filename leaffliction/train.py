@@ -3,7 +3,7 @@ from pathlib import Path
 
 import torch
 from torch import nn, optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, models, transforms
 from torchvision.models import ResNet18_Weights
 
@@ -14,6 +14,7 @@ batch_size = 16
 learning_rate = 1e-3
 num_workers = 2
 log_every = 10
+val_split = 0.2  # 20% of data for validation
 
 
 def main():
@@ -32,10 +33,25 @@ def main():
 
 	print(f"Found {len(dataset)} images across {len(dataset.classes)} classes: {dataset.classes}")
 
-	loader = DataLoader(
-		dataset,
+	# Split dataset into training and validation
+	val_size = int(len(dataset) * val_split)
+	train_size = len(dataset) - val_size
+	train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+	
+	print(f"Training samples: {len(train_dataset)}, Validation samples: {len(val_dataset)}")
+
+	train_loader = DataLoader(
+		train_dataset,
 		batch_size=batch_size,
 		shuffle=True,
+		num_workers=num_workers,
+		pin_memory=torch.cuda.is_available(),
+	)
+	
+	val_loader = DataLoader(
+		val_dataset,
+		batch_size=batch_size,
+		shuffle=False,
 		num_workers=num_workers,
 		pin_memory=torch.cuda.is_available(),
 	)
@@ -49,12 +65,13 @@ def main():
 	optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 	for epoch in range(epochs):
+		# Training phase
 		model.train()
 		running_loss = 0.0
 		running_correct = 0
 		total = 0
 
-		for batch_idx, (images, labels) in enumerate(loader, start=1):
+		for batch_idx, (images, labels) in enumerate(train_loader, start=1):
 			images = images.to(device)
 			labels = labels.to(device)
 
@@ -71,13 +88,36 @@ def main():
 
 			if batch_idx % log_every == 0:
 				print(
-					f"Epoch {epoch + 1}/{epochs} - batch {batch_idx}/{len(loader)} - "
+					f"Epoch {epoch + 1}/{epochs} - batch {batch_idx}/{len(train_loader)} - "
 					f"loss: {loss.item():.4f}"
 				)
 
-		avg_loss = running_loss / max(total, 1)
-		avg_acc = running_correct / max(total, 1)
-		print(f"Epoch {epoch + 1}/{epochs} - loss: {avg_loss:.4f} - acc: {avg_acc:.4f}")
+		train_loss = running_loss / max(total, 1)
+		train_acc = running_correct / max(total, 1)
+		print(f"Epoch {epoch + 1}/{epochs} - train_loss: {train_loss:.4f} - train_acc: {train_acc:.4f}")
+
+		# Validation phase
+		model.eval()
+		val_running_loss = 0.0
+		val_running_correct = 0
+		val_total = 0
+
+		with torch.no_grad():
+			for images, labels in val_loader:
+				images = images.to(device)
+				labels = labels.to(device)
+
+				outputs = model(images)
+				loss = criterion(outputs, labels)
+
+				val_running_loss += loss.item() * images.size(0)
+				_, preds = torch.max(outputs, 1)
+				val_running_correct += (preds == labels).sum().item()
+				val_total += images.size(0)
+
+		val_loss = val_running_loss / max(val_total, 1)
+		val_acc = val_running_correct / max(val_total, 1)
+		print(f"Epoch {epoch + 1}/{epochs} - val_loss: {val_loss:.4f} - val_acc: {val_acc:.4f}")
 
 	checkpoint = {
 		"model_state": model.state_dict(),
