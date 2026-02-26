@@ -1,20 +1,18 @@
 from pathlib import Path
 import json
 import hashlib
-import math
 import os
 
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-from torchvision import models, datasets, transforms
-from torchvision.transforms import functional as F
+from torchvision import models, datasets
 from torchvision.models import ResNet18_Weights
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
 
-from transformation import get_transforms, IMAGE_SIZE, MEAN, STD
+from transformation import get_transforms, MEAN, STD
 
 CACHE_FILE = "accuracy_cache.json"
 
@@ -62,53 +60,19 @@ def visualize_prediction(image_path: str, model, class_to_idx: dict):
     x_vis = torch.clamp(x_vis, 0, 1)
     x_vis = x_vis.permute(1, 2, 0).cpu().numpy()
 
-    previews = build_preview_images(image)
-    previews.append(("Model Input", x_vis))
+    fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+    axes[0].imshow(image)
+    axes[0].set_title("Original")
+    axes[0].axis("off")
 
-    cols = 3
-    rows = math.ceil(len(previews) / cols)
-    fig, axes = plt.subplots(rows, cols, figsize=(4 * cols, 4 * rows))
-    axes = np.array(axes).reshape(-1)
-
-    for ax, (title, img) in zip(axes, previews):
-        ax.imshow(img)
-        ax.set_title(title)
-        ax.axis("off")
-
-    for ax in axes[len(previews):]:
-        ax.axis("off")
+    axes[1].imshow(x_vis)
+    axes[1].set_title("Transformed")
+    axes[1].axis("off")
 
     fig.text(0.5, 0.02, f"Prediction: {label}", ha="center", fontsize=12)
     plt.tight_layout(rect=[0, 0.05, 1, 1])
     plt.show()
     return label
-
-
-def build_preview_images(image: Image.Image):
-    base = F.resize(image, [IMAGE_SIZE, IMAGE_SIZE])
-    base = F.center_crop(base, [IMAGE_SIZE, IMAGE_SIZE])
-
-    color_jitter = transforms.ColorJitter(
-        brightness=0.2,
-        contrast=0.2,
-        saturation=0.2,
-        hue=0.05,
-    )
-    gaussian_blur = transforms.GaussianBlur(
-        kernel_size=3,
-        sigma=(0.1, 2.0),
-    )
-
-    previews = [
-        ("Original", image),
-        ("Resize+Crop", base),
-        ("H-Flip", F.hflip(base)),
-        ("Rotate 15°", F.rotate(base, 15)),
-        ("Rotate -15°", F.rotate(base, -15)),
-        ("ColorJitter", color_jitter(base)),
-        ("GaussianBlur", gaussian_blur(base)),
-    ]
-    return previews
 
 
 def get_cache_key(model_path: str, data_dir: str) -> str:
