@@ -1,4 +1,7 @@
 from pathlib import Path
+import json
+import hashlib
+import os
 
 import torch
 from torch import nn
@@ -10,6 +13,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from transformation import get_transforms, MEAN, STD
+
+CACHE_FILE = "accuracy_cache.json"
 
 def load_model(checkpoint_path: str):
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
@@ -70,8 +75,76 @@ def visualize_prediction(image_path: str, model, class_to_idx: dict):
     return label
 
 
-def evaluate_model_accuracy(model, data_dir: str, batch_size: int = 16):
+def get_cache_key(model_path: str, data_dir: str) -> str:
+    """Generate a unique cache key based on model and data directory."""
+    # Get modification times
+    model_mtime = os.path.getmtime(model_path)
+    data_mtime = max(
+        os.path.getmtime(os.path.join(root, f))
+        for root, _, files in os.walk(data_dir)
+        for f in files
+        if f.lower().endswith(('.jpg', '.jpeg', '.png'))
+    ) if os.path.exists(data_dir) else 0
+    
+    # Create hash from paths and modification times
+    cache_str = f"{model_path}:{model_mtime}:{data_dir}:{data_mtime}"
+    return hashlib.md5(cache_str.encode()).hexdigest()
+
+
+def load_cached_results(cache_key: str):
+    """Load cached accuracy results if they exist."""
+    if not os.path.exists(CACHE_FILE):
+        return None
+    
+    try:
+        with open(CACHE_FILE, 'r') as f:
+            cache = json.load(f)
+        
+        if cache_key in cache:
+            print("📦 Loading cached accuracy results...")
+            return cache[cache_key]
+    except (json.JSONDecodeError, KeyError):
+        pass
+    
+    return None
+
+
+def save_cached_results(cache_key: str, overall_acc: float, class_accs: dict, class_names: list):
+    """Save accuracy results to cache."""
+    cache = {}
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, 'r') as f:
+                cache = json.load(f)
+        except json.JSONDecodeError:
+            pass
+    
+    cache[cache_key] = {
+        'overall_accuracy': overall_acc,
+        'class_accuracies': class_accs,
+        'class_names': class_names
+    }
+    
+    with open(CACHE_FILE, 'w') as f:
+        json.dump(cache, f, indent=2)
+    
+    print("💾 Results cached for future use")
+
+
+def evaluate_model_accuracy(model, data_dir: str, batch_size: int = 16, model_path: str = None, use_cache: bool = True):
     """Evaluate model accuracy on a dataset and return metrics."""
+    # Check cache first
+    if use_cache and model_path:
+        cache_key = get_cache_key(model_path, data_dir)
+        cached = load_cached_results(cache_key)
+        if cached:
+            return (
+                cached['overall_accuracy'],
+                cached['class_accuracies'],
+                cached['class_names']
+            )
+    
+    print("🔄 Evaluating model accuracy...")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     model.eval()
@@ -116,12 +189,19 @@ def evaluate_model_accuracy(model, data_dir: str, batch_size: int = 16):
         for cls in dataset.classes
     }
     
+    # Save to cache
+    if use_cache and model_path:
+        cache_key = get_cache_key(model_path, data_dir)
+        save_cached_results(cache_key, overall_accuracy, class_accuracies, list(dataset.classes))
+    
     return overall_accuracy, class_accuracies, dataset.classes
 
 
-def visualize_accuracy(model, data_dir: str, batch_size: int = 16):
+def visualize_accuracy(model, data_dir: str, batch_size: int = 16, model_path: str = None, use_cache: bool = True):
     """Create a simple visual representation of model accuracy."""
-    overall_acc, class_accs, class_names = evaluate_model_accuracy(model, data_dir, batch_size)
+    overall_acc, class_accs, class_names = evaluate_model_accuracy(
+        model, data_dir, batch_size, model_path, use_cache
+    )
     
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
     
