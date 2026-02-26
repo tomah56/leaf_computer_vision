@@ -1,5 +1,4 @@
 from pathlib import Path
-import argparse
 import json
 import hashlib
 import os
@@ -258,46 +257,15 @@ def visualize_accuracy(model, data_dir: str, batch_size: int = 16, model_path: s
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Predict leaf disease from images"
-    )
-    parser.add_argument(
-        "--model",
-        type=str,
-        default="model_gaussian.pth",
-        help="Path to the model checkpoint file",
-    )
-    parser.add_argument(
-        "--data-dir",
-        type=str,
-        default="images/apple",
-        help="Path to the image dataset directory for accuracy evaluation",
-    )
-    parser.add_argument(
-        "--images",
-        nargs="+",
-        type=str,
-        help="List of image paths to predict (optional)",
-    )
-    args = parser.parse_args()
-
-    model, class_to_idx = load_model(args.model)
+    model_path = "model_gaussian.pth"
+    model, class_to_idx = load_model(model_path)
     
     # Visualize model accuracy (with caching)
-    visualize_accuracy(model, args.data_dir, model_path=args.model)
+    visualize_accuracy(model, "images/apple", model_path=model_path)
     
     # Individual predictions
-    if args.images:
-        for img_path in args.images:
-            visualize_prediction(img_path, model, class_to_idx)
-    else:
-        # Default predictions if no images specified
-        default_images = [
-            "images/apple/Apple_scab/image (10).JPG",
-            "images/apple/Apple_rust/image (13).JPG",
-            "images/apple/Apple_Black_rot/image (37).JPG",
-            "images/apple/Apple_healthy/image (39).JPG",
-        ]
-        for img_path in default_images:
-            if os.path.exists(img_path):
-                visualize_prediction(img_path, model, class_to_idx)
+    visualize_prediction("images/apple/Apple_scab/image (10).JPG", model, class_to_idx)
+    # visualize_prediction("images/grape/Grape_Black_rot/image (16).JPG", model, class_to_idx)
+    visualize_prediction("images/apple/Apple_rust/image (13).JPG", model, class_to_idx)
+    visualize_prediction("images/apple/Apple_Black_rot/image (37).JPG", model, class_to_idx)
+    visualize_prediction("images/apple/Apple_healthy/image (39).JPG", model, class_to_idx)
