@@ -184,6 +184,8 @@ if __name__ == "__main__":
     visualize_accuracy(model, "images/apple")
     
     # Individual predictions
+    visualize_prediction("images/apple/Apple_scab/image (10).JPG", model, class_to_idx)
+    # visualize_prediction("leaffliction/images/apple/Apple_scab/image (10).JPG", model, class_to_idx)
     # visualize_prediction("images/apple/Apple_rust/image (13).JPG", model, class_to_idx)
     # visualize_prediction("images/apple/Apple_Black_rot/image (37).JPG", model, class_to_idx)
     # visualize_prediction("images/apple/Apple_healthy/image (39).JPG", model, class_to_idx)
