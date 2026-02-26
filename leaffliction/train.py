@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import argparse
+import sys
 from pathlib import Path
 
 import torch
@@ -10,7 +12,6 @@ from torchvision.models import ResNet18_Weights
 from transformation import get_transforms
 
 
-data_dir = Path("images/apple")
 epochs = 2
 batch_size = 16
 learning_rate = 1e-3
@@ -44,7 +45,7 @@ def stratified_split(targets, split_ratio, rng_seed):
 	return train_indices, val_indices
 
 
-def main():
+def main(data_dir):
 	torch.manual_seed(seed)
 	if torch.cuda.is_available():
 		torch.cuda.manual_seed_all(seed)
@@ -183,5 +184,15 @@ def main():
 	}
 	torch.save(checkpoint, "model_gaussian.pth")
 
+
 if __name__ == "__main__":
-	main()
+	parser = argparse.ArgumentParser(
+		description="Train leaf disease classification model"
+	)
+	parser.add_argument(
+		"data_dir",
+		type=str,
+		help="Path to the image dataset directory",
+	)
+	args = parser.parse_args()
+	main(Path(args.data_dir))
