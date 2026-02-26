@@ -17,6 +17,10 @@ def get_transforms(train: bool = False):
 				saturation=0.2,
 				hue=0.05,
 			),
+			transforms.RandomApply(
+				[transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0))],
+				p=0.2,
+			),
 		]
 	else:
 		transform_steps = [

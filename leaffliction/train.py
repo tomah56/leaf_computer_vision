@@ -181,7 +181,7 @@ def main():
 		"class_to_idx": dataset.class_to_idx,
 		"arch": "resnet18",
 	}
-	torch.save(checkpoint, "model_split.pth")
+	torch.save(checkpoint, "model_gaussian.pth")
 
 if __name__ == "__main__":
 	main()

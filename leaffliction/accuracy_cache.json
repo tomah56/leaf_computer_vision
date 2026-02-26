@@ -13,5 +13,20 @@
       "Apple_rust",
       "Apple_scab"
     ]
+  },
+  "9abc56e5e018c9a5f8687bb44d9f4046": {
+    "overall_accuracy": 0.9883059418457648,
+    "class_accuracies": {
+      "Apple_Black_rot": 0.9887096774193549,
+      "Apple_healthy": 0.9902439024390244,
+      "Apple_rust": 1.0,
+      "Apple_scab": 0.9777424483306836
+    },
+    "class_names": [
+      "Apple_Black_rot",
+      "Apple_healthy",
+      "Apple_rust",
+      "Apple_scab"
+    ]
   }
 }
