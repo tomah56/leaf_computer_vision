@@ -1,4 +1,10 @@
 {
-  "folder": "images/grape",
-  "model": "model_gaussian.pth"
+    "model": "model_gaussian.pth",
+    "folder": "images/grape",
+    "images": [
+        "images/grape/Grape_healthy/image (13).JPG",
+        "images/grape/Grape_Black_rot/image (16).JPG",
+        "images/grape/Grape_Esca/image (10).JPG",
+        "images/grape/Grape_spot/image (13).JPG"
+    ]
 }
