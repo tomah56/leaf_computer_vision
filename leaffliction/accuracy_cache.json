@@ -43,5 +43,35 @@
       "Apple_rust",
       "Apple_scab"
     ]
+  },
+  "70ebff98e1dd4aad06b1d99f82bb5891": {
+    "overall_accuracy": 0.22218710493046775,
+    "class_accuracies": {
+      "Apple_Black_rot": 0.317741935483871,
+      "Apple_healthy": 0.12378048780487805,
+      "Apple_rust": 0.01818181818181818,
+      "Apple_scab": 0.4737678855325914
+    },
+    "class_names": [
+      "Apple_Black_rot",
+      "Apple_healthy",
+      "Apple_rust",
+      "Apple_scab"
+    ]
+  },
+  "a86dd8dc2c0e9b9d6c5291c1c08d10fe": {
+    "overall_accuracy": 0.950702489524279,
+    "class_accuracies": {
+      "Grape_Black_rot": 0.9202037351443124,
+      "Grape_Esca": 0.934876989869754,
+      "Grape_healthy": 0.9691943127962085,
+      "Grape_spot": 0.9972093023255814
+    },
+    "class_names": [
+      "Grape_Black_rot",
+      "Grape_Esca",
+      "Grape_healthy",
+      "Grape_spot"
+    ]
   }
 }
