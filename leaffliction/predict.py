@@ -1,7 +1,10 @@
+#!/usr/bin/env python3
 from pathlib import Path
+import argparse
 import json
 import hashlib
 import os
+import sys
 
 import torch
 from torch import nn
@@ -257,15 +260,47 @@ def visualize_accuracy(model, data_dir: str, batch_size: int = 16, model_path: s
 
 
 if __name__ == "__main__":
-    model_path = "model_gaussian.pth"
-    model, class_to_idx = load_model(model_path)
-    
-    # Visualize model accuracy (with caching)
-    visualize_accuracy(model, "images/grape", model_path=model_path)
-    
-    # Individual predictions
-    visualize_prediction("images/grape/Grape_Esca/image (10).JPG", model, class_to_idx)
-    # visualize_prediction("images/grape/Grape_Black_rot/image (16).JPG", model, class_to_idx)
-    visualize_prediction("images/grape/Grape_spot/image (13).JPG", model, class_to_idx)
-    visualize_prediction("images/grape/Grape_Black_rot/image (37).JPG", model, class_to_idx)
-    visualize_prediction("images/grape/Grape_healthy/image (39).JPG", model, class_to_idx)
+    parser = argparse.ArgumentParser(
+        description="Predict leaf disease from an image"
+    )
+    parser.add_argument(
+        "image_path",
+        type=str,
+        help="Path to the image file to predict",
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default=None,
+        help="Path to model file (auto-detects if not specified)",
+    )
+    args = parser.parse_args()
+
+    if not os.path.exists(args.image_path):
+        print(f"Error: Image file not found: {args.image_path}")
+        sys.exit(1)
+
+    # Auto-detect model if not specified
+    if args.model is None:
+        image_path_obj = Path(args.image_path)
+        # Try to find folder name from path (e.g., Apple, grape)
+        for parent in image_path_obj.parents:
+            potential_model = f"model_{parent.name}.pth"
+            if os.path.exists(potential_model):
+                args.model = potential_model
+                print(f"Auto-detected model: {args.model}")
+                break
+        
+        # Fallback to any .pth file in current directory
+        if args.model is None:
+            pth_files = list(Path(".").glob("model_*.pth"))
+            if pth_files:
+                args.model = str(pth_files[0])
+                print(f"Using model: {args.model}")
+            else:
+                print("Error: No model file found. Specify with --model")
+                sys.exit(1)
+
+    model, class_to_idx = load_model(args.model)
+    label = visualize_prediction(args.image_path, model, class_to_idx)
+    print(f"\nPrediction: {label}")
