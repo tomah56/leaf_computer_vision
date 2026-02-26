@@ -257,11 +257,11 @@ def visualize_accuracy(model, data_dir: str, batch_size: int = 16, model_path: s
 
 
 if __name__ == "__main__":
-    model, class_to_idx = load_model("model_split.pth")
+    model_path = "model_split.pth"
+    model, class_to_idx = load_model(model_path)
     
-    # Visualize model accuracy
-    print("Evaluating model accuracy...")
-    visualize_accuracy(model, "images/apple")
+    # Visualize model accuracy (with caching)
+    visualize_accuracy(model, "images/apple", model_path=model_path)
     
     # Individual predictions
     visualize_prediction("images/apple/Apple_scab/image (10).JPG", model, class_to_idx)
