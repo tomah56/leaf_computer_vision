@@ -1,0 +1,17 @@
+{
+  "1b04feb61e47358945a65ce3b8e1e5b7": {
+    "overall_accuracy": 0.9554361567635904,
+    "class_accuracies": {
+      "Apple_Black_rot": 0.9983870967741936,
+      "Apple_healthy": 1.0,
+      "Apple_rust": 0.9927272727272727,
+      "Apple_scab": 0.78060413354531
+    },
+    "class_names": [
+      "Apple_Black_rot",
+      "Apple_healthy",
+      "Apple_rust",
+      "Apple_scab"
+    ]
+  }
+}
