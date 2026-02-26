@@ -177,12 +177,15 @@ def main(data_dir):
 
 		scheduler.step()
 
+	folder_name = data_dir.name
+	output_file = f"model_{folder_name}.pth"
 	checkpoint = {
 		"model_state": model.state_dict(),
 		"class_to_idx": dataset.class_to_idx,
 		"arch": "resnet18",
 	}
-	torch.save(checkpoint, "model_gaussian.pth")
+	torch.save(checkpoint, output_file)
+	print(f"\nModel saved to: {output_file}")
 
 
 if __name__ == "__main__":
