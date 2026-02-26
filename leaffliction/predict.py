@@ -257,22 +257,122 @@ def visualize_accuracy(model, data_dir: str, batch_size: int = 16, model_path: s
     print("="*50 + "\n")
 
 
+def process_json_config(config_path: str):
+    """Process JSON configuration file for batch predictions."""
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError) as e:
+        print(f"Error reading JSON file: {e}")
+        sys.exit(1)
+    
+    # Get model path (default to "default_model.pth" if not specified)
+    model_path = config.get("model", "default_model.pth")
+    
+    if not os.path.exists(model_path):
+        print(f"Error: Model file not found: {model_path}")
+        sys.exit(1)
+    
+    model, class_to_idx = load_model(model_path)
+    
+    # Get image paths
+    image_paths = []
+    
+    if "images" in config:
+        image_paths = config["images"]
+    elif "folder" in config:
+        folder = config["folder"]
+        if not os.path.isdir(folder):
+            print(f"Error: Folder not found: {folder}")
+            sys.exit(1)
+        # Get all image files from folder
+        for root, _, files in os.walk(folder):
+            for file in files:
+                if file.lower().endswith(('.jpg', '.jpeg', '.png')):
+                    image_paths.append(os.path.join(root, file))
+    else:
+        print("Error: JSON must contain 'images' (list of paths) or 'folder' (directory path)")
+        sys.exit(1)
+    
+    if not image_paths:
+        print("Error: No images found in configuration")
+        sys.exit(1)
+    
+    # Process each image
+    print(f"\n{'='*60}")
+    print(f"BATCH PREDICTION RESULTS")
+    print(f"Model: {model_path}")
+    print(f"Total images: {len(image_paths)}")
+    print(f"{'='*60}\n")
+    
+    results = []
+    for i, image_path in enumerate(image_paths, 1):
+        if not os.path.exists(image_path):
+            print(f"[{i}/{len(image_paths)}] ⚠️  Image not found: {image_path}")
+            continue
+        
+        try:
+            predicted_class = predict_image(image_path, model, class_to_idx)
+            results.append({"image": image_path, "prediction": predicted_class})
+            print(f"[{i}/{len(image_paths)}] ✓ {image_path}")
+            print(f"              → Prediction: {predicted_class}\n")
+        except Exception as e:
+            print(f"[{i}/{len(image_paths)}] ✗ Error processing {image_path}: {e}\n")
+    
+    # Print summary
+    print(f"{'='*60}")
+    print(f"SUMMARY")
+    print(f"{'='*60}")
+    for result in results:
+        print(f"{result['image']}: {result['prediction']}")
+    print(f"{'='*60}\n")
+    
+    return results
+
+
 if __name__ == "__main__":
     import sys
     
     if len(sys.argv) != 2:
-        print("Usage: ./predict.py <image_path>")
-        print("Example: ./predict.py ./images/grape/Grape_healthy/image (1).JPG")
+        print("Usage:")
+        print("  Single image:  ./predict.py <image_path.jpg>")
+        print("  Batch mode:    ./predict.py <config.json>")
+        print("\nExample:")
+        print("  ./predict.py ./images/grape/Grape_healthy/image (1).JPG")
+        print("  ./predict.py config.json")
+        print("\nJSON config format:")
+        print('  {"images": ["path/to/image1.jpg", "path/to/image2.jpg"], "model": "model_gaussian.pth"}')
+        print('  or')
+        print('  {"folder": "images/grape", "model": "model_gaussian.pth"}')
         sys.exit(1)
     
-    image_path = sys.argv[1]
-    if not os.path.exists(image_path):
-        print(f"Error: Image file not found: {image_path}")
+    file_path = sys.argv[1]
+    
+    if not os.path.exists(file_path):
+        print(f"Error: File not found: {file_path}")
         sys.exit(1)
     
-    model_path = "model_gaussian.pth"
-    model, class_to_idx = load_model(model_path)
-    
-    # Visualize prediction on the provided image
-    predicted_class = visualize_prediction(image_path, model, class_to_idx)
-    print(f"Prediction: {predicted_class}")
+    # Check file type
+    if file_path.lower().endswith('.json'):
+        # Process JSON configuration for batch predictions
+        process_json_config(file_path)
+    elif file_path.lower().endswith(('.jpg', '.jpeg', '.png')):
+        # Process single image
+        model_path = "default_model.pth"
+        
+        # Try to use model_gaussian.pth if it exists, otherwise use default
+        if os.path.exists("model_gaussian.pth"):
+            model_path = "model_gaussian.pth"
+        
+        if not os.path.exists(model_path):
+            print(f"Error: Model file not found: {model_path}")
+            sys.exit(1)
+        
+        model, class_to_idx = load_model(model_path)
+        
+        # Visualize prediction on the provided image
+        predicted_class = visualize_prediction(file_path, model, class_to_idx)
+        print(f"Prediction: {predicted_class}")
+    else:
+        print(f"Error: Unsupported file type. Expected .jpg/.jpeg/.png or .json")
+        sys.exit(1)
