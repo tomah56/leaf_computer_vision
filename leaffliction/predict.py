@@ -13,6 +13,8 @@ from torchvision.models import ResNet18_Weights
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
 
 from transformation import get_transforms, MEAN, STD
 
@@ -111,7 +113,7 @@ def load_cached_results(cache_key: str):
     return None
 
 
-def save_cached_results(cache_key: str, overall_acc: float, class_accs: dict, class_names: list):
+def save_cached_results(cache_key: str, overall_acc: float, class_accs: dict, class_names: list, conf_matrix: list = None):
     """Save accuracy results to cache."""
     cache = {}
     if os.path.exists(CACHE_FILE):
@@ -124,7 +126,8 @@ def save_cached_results(cache_key: str, overall_acc: float, class_accs: dict, cl
     cache[cache_key] = {
         'overall_accuracy': overall_acc,
         'class_accuracies': class_accs,
-        'class_names': class_names
+        'class_names': class_names,
+        'confusion_matrix': conf_matrix
     }
     
     with open(CACHE_FILE, 'w') as f:
@@ -134,7 +137,7 @@ def save_cached_results(cache_key: str, overall_acc: float, class_accs: dict, cl
 
 
 def evaluate_model_accuracy(model, data_dir: str, batch_size: int = 16, model_path: str = None, use_cache: bool = True):
-    """Evaluate model accuracy on a dataset and return metrics."""
+    """Evaluate model accuracy on a dataset and return metrics including confusion matrix."""
     # Check cache first
     if use_cache and model_path:
         cache_key = get_cache_key(model_path, data_dir)
@@ -143,7 +146,8 @@ def evaluate_model_accuracy(model, data_dir: str, batch_size: int = 16, model_pa
             return (
                 cached['overall_accuracy'],
                 cached['class_accuracies'],
-                cached['class_names']
+                cached['class_names'],
+                cached.get('confusion_matrix', None)
             )
     
     print("🔄 Evaluating model accuracy...")
@@ -159,6 +163,8 @@ def evaluate_model_accuracy(model, data_dir: str, batch_size: int = 16, model_pa
     total = 0
     class_correct = {}
     class_total = {}
+    all_preds = []
+    all_labels = []
     
     # Initialize counters for each class
     for class_name in dataset.classes:
@@ -176,6 +182,9 @@ def evaluate_model_accuracy(model, data_dir: str, batch_size: int = 16, model_pa
             correct += (preds == labels).sum().item()
             total += labels.size(0)
             
+            all_preds.extend(preds.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
+            
             # Track per-class accuracy
             for i in range(labels.size(0)):
                 label = labels[i].item()
@@ -191,24 +200,27 @@ def evaluate_model_accuracy(model, data_dir: str, batch_size: int = 16, model_pa
         for cls in dataset.classes
     }
     
+    # Compute confusion matrix
+    conf_matrix = confusion_matrix(all_labels, all_preds).tolist()
+    
     # Save to cache
     if use_cache and model_path:
         cache_key = get_cache_key(model_path, data_dir)
-        save_cached_results(cache_key, overall_accuracy, class_accuracies, list(dataset.classes))
+        save_cached_results(cache_key, overall_accuracy, class_accuracies, list(dataset.classes), conf_matrix)
     
-    return overall_accuracy, class_accuracies, dataset.classes
+    return overall_accuracy, class_accuracies, dataset.classes, conf_matrix
 
 
 def visualize_accuracy(model, data_dir: str, batch_size: int = 16, model_path: str = None, use_cache: bool = True):
-    """Create a simple visual representation of model accuracy."""
-    overall_acc, class_accs, class_names = evaluate_model_accuracy(
+    """Create a visual representation of model accuracy with confusion matrix."""
+    overall_acc, class_accs, class_names, conf_matrix = evaluate_model_accuracy(
         model, data_dir, batch_size, model_path, use_cache
     )
     
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    fig, axes = plt.subplots(2, 2, figsize=(14, 12))
     
-    # Left plot: Overall accuracy gauge
-    ax1 = axes[0]
+    # Top-left: Overall accuracy gauge
+    ax1 = axes[0, 0]
     ax1.barh([0], [overall_acc * 100], color='#4CAF50', height=0.5)
     ax1.barh([0], [100 - overall_acc * 100], left=[overall_acc * 100], 
              color='#E0E0E0', height=0.5)
@@ -224,8 +236,8 @@ def visualize_accuracy(model, data_dir: str, batch_size: int = 16, model_path: s
     ax1.text(overall_acc * 50, 0, f'{overall_acc * 100:.1f}%', 
             ha='center', va='center', fontsize=16, fontweight='bold', color='white')
     
-    # Right plot: Per-class accuracy bars
-    ax2 = axes[1]
+    # Top-right: Per-class accuracy bars
+    ax2 = axes[0, 1]
     y_pos = np.arange(len(class_names))
     accuracies = [class_accs[cls] * 100 for cls in class_names]
     
@@ -243,6 +255,26 @@ def visualize_accuracy(model, data_dir: str, batch_size: int = 16, model_path: s
     # Add percentage labels on bars
     for i, (bar, acc) in enumerate(zip(bars, accuracies)):
         ax2.text(acc + 2, i, f'{acc:.1f}%', va='center', fontsize=10)
+    
+    # Bottom: Confusion matrix heatmap
+    ax3 = axes[1, 0]
+    ax4 = axes[1, 1]
+    ax4.axis('off')
+    
+    if conf_matrix is not None:
+        conf_matrix_array = np.array(conf_matrix)
+        sns.heatmap(conf_matrix_array, annot=True, fmt='d', cmap='Blues', 
+                    xticklabels=[cls.replace('_', ' ') for cls in class_names],
+                    yticklabels=[cls.replace('_', ' ') for cls in class_names],
+                    ax=ax3, cbar=True)
+        ax3.set_xlabel('Predicted', fontsize=12)
+        ax3.set_ylabel('True', fontsize=12)
+        ax3.set_title('Confusion Matrix', fontsize=14, fontweight='bold')
+    else:
+        ax3.text(0.5, 0.5, 'Confusion matrix unavailable\n(cached results)', 
+                ha='center', va='center', fontsize=12, transform=ax3.transAxes)
+        ax3.set_title('Confusion Matrix', fontsize=14, fontweight='bold')
+        ax3.axis('off')
     
     plt.tight_layout()
     plt.show()

@@ -1,64 +1,4 @@
 {
-  "1b04feb61e47358945a65ce3b8e1e5b7": {
-    "overall_accuracy": 0.9554361567635904,
-    "class_accuracies": {
-      "Apple_Black_rot": 0.9983870967741936,
-      "Apple_healthy": 1.0,
-      "Apple_rust": 0.9927272727272727,
-      "Apple_scab": 0.78060413354531
-    },
-    "class_names": [
-      "Apple_Black_rot",
-      "Apple_healthy",
-      "Apple_rust",
-      "Apple_scab"
-    ]
-  },
-  "9abc56e5e018c9a5f8687bb44d9f4046": {
-    "overall_accuracy": 0.9883059418457648,
-    "class_accuracies": {
-      "Apple_Black_rot": 0.9887096774193549,
-      "Apple_healthy": 0.9902439024390244,
-      "Apple_rust": 1.0,
-      "Apple_scab": 0.9777424483306836
-    },
-    "class_names": [
-      "Apple_Black_rot",
-      "Apple_healthy",
-      "Apple_rust",
-      "Apple_scab"
-    ]
-  },
-  "bff902aa1f7f77dbd5d8ebb9b70bf57d": {
-    "overall_accuracy": 0.9845132743362832,
-    "class_accuracies": {
-      "Apple_Black_rot": 0.9661290322580646,
-      "Apple_healthy": 0.9884146341463415,
-      "Apple_rust": 1.0,
-      "Apple_scab": 0.985691573926868
-    },
-    "class_names": [
-      "Apple_Black_rot",
-      "Apple_healthy",
-      "Apple_rust",
-      "Apple_scab"
-    ]
-  },
-  "70ebff98e1dd4aad06b1d99f82bb5891": {
-    "overall_accuracy": 0.22218710493046775,
-    "class_accuracies": {
-      "Apple_Black_rot": 0.317741935483871,
-      "Apple_healthy": 0.12378048780487805,
-      "Apple_rust": 0.01818181818181818,
-      "Apple_scab": 0.4737678855325914
-    },
-    "class_names": [
-      "Apple_Black_rot",
-      "Apple_healthy",
-      "Apple_rust",
-      "Apple_scab"
-    ]
-  },
   "a86dd8dc2c0e9b9d6c5291c1c08d10fe": {
     "overall_accuracy": 0.950702489524279,
     "class_accuracies": {
@@ -72,6 +12,32 @@
       "Grape_Esca",
       "Grape_healthy",
       "Grape_spot"
+    ],
+    "confusion_matrix": [
+      [
+        1084,
+        26,
+        0,
+        68
+      ],
+      [
+        11,
+        1292,
+        0,
+        79
+      ],
+      [
+        1,
+        0,
+        409,
+        12
+      ],
+      [
+        1,
+        0,
+        2,
+        1072
+      ]
     ]
   }
 }
