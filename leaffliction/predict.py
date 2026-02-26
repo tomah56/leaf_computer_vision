@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from pathlib import Path
 import json
 import hashlib
@@ -257,15 +258,22 @@ def visualize_accuracy(model, data_dir: str, batch_size: int = 16, model_path: s
 
 
 if __name__ == "__main__":
+    import sys
+    
+    if len(sys.argv) != 2:
+        print("Usage: ./predict.py <image_path>")
+        print("Example: ./predict.py ./images/grape/Grape_healthy/image (1).JPG")
+        sys.exit(1)
+    
+    image_path = sys.argv[1]
+    chmod +x predict.py
+    if not os.path.exists(image_path):
+        print(f"Error: Image file not found: {image_path}")
+        sys.exit(1)
+    
     model_path = "model_gaussian.pth"
     model, class_to_idx = load_model(model_path)
     
-    # Visualize model accuracy (with caching)
-    visualize_accuracy(model, "images/grape", model_path=model_path)
-    
-    # Individual predictions
-    visualize_prediction("images/grape/Grape_Esca/image (10).JPG", model, class_to_idx)
-    # visualize_prediction("images/grape/Grape_Black_rot/image (16).JPG", model, class_to_idx)
-    visualize_prediction("images/grape/Grape_spot/image (13).JPG", model, class_to_idx)
-    visualize_prediction("images/grape/Grape_Black_rot/image (37).JPG", model, class_to_idx)
-    visualize_prediction("images/grape/Grape_healthy/image (39).JPG", model, class_to_idx)
+    # Run prediction on the provided image
+    predicted_class = predict_image(image_path, model, class_to_idx)
+    print(f"Prediction: {predicted_class}")
