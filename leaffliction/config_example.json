@@ -1,10 +1,14 @@
 {
-    "model": "model_gaussian.pth",
-    "folder": "images/grape",
+    "model": "model_images.pth",
+    "folder": "images",
     "images": [
         "images/grape/Grape_healthy/image (13).JPG",
         "images/grape/Grape_Black_rot/image (16).JPG",
         "images/grape/Grape_Esca/image (10).JPG",
-        "images/grape/Grape_spot/image (13).JPG"
+        "images/grape/Grape_spot/image (13).JPG",
+        "images/apple/Apple_scab/image (7).JPG",
+        "images/apple/Apple_healthy/image (10).JPG",
+        "images/apple/Apple_Black_rot/image (3).JPG",
+        "images/apple/Apple_rust/image (23).JPG"
     ]
 }
