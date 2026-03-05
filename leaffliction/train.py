@@ -45,6 +45,63 @@ def stratified_split(targets, split_ratio, rng_seed):
 	return train_indices, val_indices
 
 
+def find_leaf_class_folders(data_dir):
+	"""Find all leaf folders containing images and return a mapping."""
+	from pathlib import Path
+	import os
+	
+	image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
+	leaf_folders = []
+	
+	for root, dirs, files in os.walk(str(data_dir)):
+		# Check if this folder contains image files
+		has_images = any(
+			Path(f).suffix.lower() in image_extensions 
+			for f in files
+		)
+		if has_images:
+			leaf_folders.append(Path(root))
+	
+	return sorted(leaf_folders)
+
+
+def create_custom_image_dataset(leaf_folders, transform):
+	"""Create a custom dataset from leaf folders."""
+	from torch.utils.data import Dataset
+	from PIL import Image
+	
+	image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
+	
+	# Map folder paths to class indices
+	class_to_idx = {folder.name: idx for idx, folder in enumerate(leaf_folders)}
+	
+	samples = []
+	for class_idx, folder in enumerate(leaf_folders):
+		for file in sorted(folder.iterdir()):
+			if file.suffix.lower() in image_extensions:
+				samples.append((str(file), class_idx))
+	
+	class ImageDataset(Dataset):
+		def __init__(self, samples, class_to_idx, transform=None):
+			self.samples = samples
+			self.class_to_idx = class_to_idx
+			self.transform = transform
+			self.classes = sorted(class_to_idx.keys())
+			self.targets = [s[1] for s in samples]
+		
+		def __len__(self):
+			return len(self.samples)
+		
+		def __getitem__(self, idx):
+			path, label = self.samples[idx]
+			image = Image.open(path).convert('RGB')
+			if self.transform:
+				image = self.transform(image)
+			return image, label
+	
+	return ImageDataset(samples, class_to_idx, transform)
+
+
 def main(data_dir):
 	torch.manual_seed(seed)
 	if torch.cuda.is_available():
@@ -52,7 +109,12 @@ def main(data_dir):
 
 	transform = get_transforms(train=True)
 
-	dataset = datasets.ImageFolder(root=str(data_dir), transform=transform)
+	# Find all leaf folders containing images
+	leaf_folders = find_leaf_class_folders(data_dir)
+	if not leaf_folders:
+		raise ValueError("No image folders found in the dataset.")
+	
+	dataset = create_custom_image_dataset(leaf_folders, transform)
 	if len(dataset.classes) == 0:
 		raise ValueError("No classes found in the dataset.")
 
