@@ -22,7 +22,11 @@ def parse_arguments():
     group.add_argument("-mask", action="store_true", help="Mask")
     group.add_argument("-roi", action="store_true", help="ROI objects")
     group.add_argument("-analyze", action="store_true", help="Analyze object")
-    group.add_argument("-pseudolandmarks", action="store_true", help="Pseudolandmarks")
+    group.add_argument(
+        "-pseudolandmarks",
+        action="store_true",
+        help="Pseudolandmarks"
+    )
 
     args = parser.parse_args()
 
@@ -37,12 +41,16 @@ def parse_arguments():
 
     if args.image and not args.src and not args.dst:
         if transform_count != 0:
-            parser.error("Transformation flags are not allowed in single image mode.")
+            parser.error(
+                "Transformation flags are not allowed in single image mode."
+            )
         return args
 
     if args.src and args.dst and not args.image:
         if transform_count != 1:
-            parser.error("Directory mode requires exactly ONE transformation flag.")
+            parser.error(
+                "Directory mode requires exactly ONE transformation flag."
+            )
         return args
 
     parser.error(
@@ -69,7 +77,10 @@ def process_directory(src, dst, args):
         )
 
         parent = os.path.dirname(src)
-        dst = os.path.join(parent, os.path.basename(src) + "_" + transform_name)
+        dst = os.path.join(
+            parent,
+            os.path.basename(src) + "_" + transform_name
+        )
         os.makedirs(dst, exist_ok=True)
 
     if args.blur:
@@ -148,7 +159,11 @@ def preprocess_img(img):
 
 def get_mask(img):
     blurred = preprocess_img(img)
-    binary = pcv.threshold.binary(gray_img=blurred, threshold=120, object_type='dark')
+    binary = pcv.threshold.binary(
+        gray_img=blurred,
+        threshold=120,
+        object_type='dark'
+    )
     roi = pcv.roi.rectangle(img=img, x=5, y=5, h=245, w=245)
     kept_mask = pcv.roi.filter(mask=binary, roi=roi, roi_type='partial')
     return kept_mask
@@ -160,7 +175,11 @@ def transform_blur(img):
 
 def transform_mask(img):
     blurred = preprocess_img(img)
-    binary = pcv.threshold.binary(gray_img=blurred, threshold=120, object_type='light')
+    binary = pcv.threshold.binary(
+        gray_img=blurred,
+        threshold=120,
+        object_type='light'
+    )
     return pcv.apply_mask(img=img, mask=binary, mask_color='white')
 
 
@@ -178,49 +197,54 @@ def transform_analyze(img):
 
 def transform_pseudolandmarks(img):
     kept_mask = get_mask(img)
-    top, bottom, center = pcv.homology.x_axis_pseudolandmarks(img=img, mask=kept_mask)
+    top, bottom, center = pcv.homology.x_axis_pseudolandmarks(
+        img=img, mask=kept_mask
+    )
     landmark_img = img.copy()
     for pt in top:
-        cv2.circle(landmark_img, (int(pt[0][0]), int(pt[0][1])), 4, (0, 0, 255), -1)
+        cv2.circle(landmark_img,
+                   (int(pt[0][0]), int(pt[0][1])), 4, (0, 0, 255), -1)
     for pt in bottom:
-        cv2.circle(landmark_img, (int(pt[0][0]), int(pt[0][1])), 4, (255, 0, 0), -1)
+        cv2.circle(landmark_img,
+                   (int(pt[0][0]), int(pt[0][1])), 4, (255, 0, 0), -1)
     for pt in center:
-        cv2.circle(landmark_img, (int(pt[0][0]), int(pt[0][1])), 4, (0, 255, 255), -1)
+        cv2.circle(landmark_img,
+                   (int(pt[0][0]), int(pt[0][1])), 4, (0, 255, 255), -1)
     return landmark_img
 
 
 def plot_histogram(img):
     total_pixels = img.shape[0] * img.shape[1]
 
-    plt.figure(figsize=(8,6))
+    plt.figure(figsize=(8, 6))
 
     # RGB
-    colors = {'blue':0, 'green':1, 'red':2}
+    colors = {'blue': 0, 'green': 1, 'red': 2}
     for name, i in colors.items():
-        hist = cv2.calcHist([img],[i],None,[256],[0,256]).flatten()
+        hist = cv2.calcHist([img], [i], None, [256], [0, 256]).flatten()
         hist = (hist / total_pixels) * 100
         plt.plot(hist, label=name)
 
     # HSV
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    hsv_channels = {'hue':0, 'saturation':1, 'value':2}
+    hsv_channels = {'hue': 0, 'saturation': 1, 'value': 2}
     for name, i in hsv_channels.items():
-        hist = cv2.calcHist([hsv],[i],None,[256],[0,256]).flatten()
+        hist = cv2.calcHist([hsv], [i], None, [256], [0, 256]).flatten()
         hist = (hist / total_pixels) * 100
         plt.plot(hist, label=name)
 
     # LAB
     lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
-    lab_channels = {'lightness':0, 'green-magenta':1, 'blue-yellow':2}
+    lab_channels = {'lightness': 0, 'green-magenta': 1, 'blue-yellow': 2}
     for name, i in lab_channels.items():
-        hist = cv2.calcHist([lab],[i],None,[256],[0,256]).flatten()
+        hist = cv2.calcHist([lab], [i], None, [256], [0, 256]).flatten()
         hist = (hist / total_pixels) * 100
         plt.plot(hist, label=name)
 
     plt.xlabel("Pixel intensity")
     plt.ylabel("Proportion of pixels (%)")
     plt.title("Color histogram")
-    plt.xlim([0,255])
+    plt.xlim([0, 255])
     plt.legend()
     plt.grid(True)
 
