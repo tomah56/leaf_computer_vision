@@ -6,6 +6,7 @@ import cv2
 import matplotlib.pyplot as plt
 from plantcv import plantcv as pcv
 
+
 def parse_arguments():
     parser = argparse.ArgumentParser()
 
@@ -138,44 +139,45 @@ def process_image(path):
     plot_histogram(img)
     plt.show()
 
-def transform_blur(img):
+
+def preprocess_img(img):
     gray = pcv.rgb2gray_lab(rgb_img=img, channel='a')
     blurred = pcv.gaussian_blur(img=gray, ksize=(11, 11), sigma_x=0)
     return blurred
 
-def transform_mask(img):
-    gray = pcv.rgb2gray_lab(rgb_img=img, channel='a')
-    blurred = pcv.gaussian_blur(img=gray, ksize=(11, 11), sigma_x=0)
-    binary = pcv.threshold.binary(gray_img=blurred, threshold=120, object_type='light')
-    masked = pcv.apply_mask(img=img, mask=binary, mask_color='white')
-    return masked
 
-def transform_roi(img):
-    gray = pcv.rgb2gray_lab(rgb_img=img, channel='a')
-    blurred = pcv.gaussian_blur(img=gray, ksize=(11, 11), sigma_x=0)
+def get_mask(img):
+    blurred = preprocess_img(img)
     binary = pcv.threshold.binary(gray_img=blurred, threshold=120, object_type='dark')
     roi = pcv.roi.rectangle(img=img, x=5, y=5, h=245, w=245)
     kept_mask = pcv.roi.filter(mask=binary, roi=roi, roi_type='partial')
+    return kept_mask
+
+
+def transform_blur(img):
+    return preprocess_img(img)
+
+
+def transform_mask(img):
+    blurred = preprocess_img(img)
+    binary = pcv.threshold.binary(gray_img=blurred, threshold=120, object_type='light')
+    return pcv.apply_mask(img=img, mask=binary, mask_color='white')
+
+
+def transform_roi(img):
+    kept_mask = get_mask(img)
     roi_img = img.copy()
     cv2.rectangle(roi_img, (5, 5), (250, 250), (255, 0, 0), 2)
     roi_img[kept_mask > 0] = [0, 255, 0]
     return roi_img
 
+
 def transform_analyze(img):
-    gray = pcv.rgb2gray_lab(rgb_img=img, channel='a')
-    blurred = pcv.gaussian_blur(img=gray, ksize=(11, 11), sigma_x=0)
-    binary = pcv.threshold.binary(gray_img=blurred, threshold=120, object_type='dark')
-    roi = pcv.roi.rectangle(img=img, x=5, y=5, h=245, w=245)
-    kept_mask = pcv.roi.filter(mask=binary, roi=roi, roi_type='partial')
-    shape_img = pcv.analyze.size(img=img, labeled_mask=kept_mask)
-    return shape_img
+    return pcv.analyze.size(img=img, labeled_mask=get_mask(img))
+
 
 def transform_pseudolandmarks(img):
-    gray = pcv.rgb2gray_lab(rgb_img=img, channel='a')
-    blurred = pcv.gaussian_blur(img=gray, ksize=(11, 11), sigma_x=0)
-    binary = pcv.threshold.binary(gray_img=blurred, threshold=120, object_type='dark')
-    roi = pcv.roi.rectangle(img=img, x=5, y=5, h=245, w=245)
-    kept_mask = pcv.roi.filter(mask=binary, roi=roi, roi_type='partial')
+    kept_mask = get_mask(img)
     top, bottom, center = pcv.homology.x_axis_pseudolandmarks(img=img, mask=kept_mask)
     landmark_img = img.copy()
     for pt in top:
