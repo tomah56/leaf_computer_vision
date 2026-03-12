@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import os
 import cv2
 import matplotlib.pyplot as plt
 from plantcv import plantcv as pcv
@@ -52,8 +53,63 @@ def parse_arguments():
     )
 
 
-def process_directory(src, dst, mask):
-    pass
+def process_directory(src, dst, args):
+    if not os.path.isdir(src):
+        raise ValueError(f"Source path '{src}' is not a directory.")
+
+    # Create destination directory if it does not exist
+    if not os.path.exists(dst):
+        transform_name = (
+            "blur" if args.blur else
+            "mask" if args.mask else
+            "roi" if args.roi else
+            "analyze" if args.analyze else
+            "pseudolandmarks"
+        )
+
+        parent = os.path.dirname(src)
+        dst = os.path.join(parent, os.path.basename(src) + "_" + transform_name)
+        os.makedirs(dst, exist_ok=True)
+
+    if args.blur:
+        transform = transform_blur
+        suffix = "_blur"
+    elif args.mask:
+        transform = transform_mask
+        suffix = "_mask"
+    elif args.roi:
+        transform = transform_roi
+        suffix = "_roi"
+    elif args.analyze:
+        transform = transform_analyze
+        suffix = "_analyze"
+    elif args.pseudolandmarks:
+        transform = transform_pseudolandmarks
+        suffix = "_pseudolandmarks"
+    else:
+        raise ValueError("No transformation flag selected.")
+
+    valid_ext = (".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff")
+
+    for file in os.listdir(src):
+        if not file.lower().endswith(valid_ext):
+            continue
+
+        in_path = os.path.join(src, file)
+
+        img, _, _ = pcv.readimage(filename=in_path)
+
+        result = transform(img)
+
+        name, ext = os.path.splitext(file)
+        out_path = os.path.join(dst, name + suffix + ext)
+
+        if result.ndim == 2:
+            cv2.imwrite(out_path, result)
+        else:
+            cv2.imwrite(out_path, result)
+
+        print(f"Saved: {out_path}")
 
 
 def process_image(path):
@@ -172,7 +228,7 @@ if __name__ == "__main__":
 
     if args.image:
         process_image(args.image)
-    elif args.src and args.dst and args.mask:
-        process_directory(args.src, args.dst, args.mask)
+    elif args.src and args.dst:
+        process_directory(args.src, args.dst, args)
     else:
         print("Invalid usage.")
