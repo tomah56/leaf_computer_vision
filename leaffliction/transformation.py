@@ -8,6 +8,24 @@ from plantcv import plantcv as pcv
 
 
 def parse_arguments():
+    """
+    Parse and validate command-line arguments.
+
+    Returns:
+        argparse.Namespace: Parsed arguments object with attributes:
+            - image (str): Path to a single image.
+            - src (str): Source directory for batch processing.
+            - dst (str): Destination directory for saving results.
+            - blur (bool): Apply Gaussian blur.
+            - mask (bool): Apply mask.
+            - roi (bool): Highlight ROI objects.
+            - analyze (bool): Analyze object size.
+            - pseudolandmarks (bool): Generate pseudolandmarks.
+
+    Raises:
+        SystemExit: If arguments are invalid
+                    or transformation rules are violated.
+    """
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -63,6 +81,23 @@ def parse_arguments():
 
 
 def process_directory(src, dst, args):
+    """
+    Apply a single transformation to all valid images in a directory.
+    Creates the destination directory if it does not exist.
+    Supported transformations: blur, mask, roi, analyze, pseudolandmarks.
+    Only processes images with extensions:
+        .png, .jpg, .jpeg, .bmp, .tif, .tiff.
+
+    Args:
+        src (str): Path to the source directory containing images.
+        dst (str): Path to the destination directory for saving results.
+        args (argparse.Namespace): Parsed arguments containing
+                                   the selected transformation.
+
+    Raises:
+        ValueError: If source path is not a directory
+                    or no transformation flag is selected.
+    """
     if not os.path.isdir(src):
         raise ValueError(f"Source path '{src}' is not a directory.")
 
@@ -125,6 +160,13 @@ def process_directory(src, dst, args):
 
 
 def process_image(path):
+    """
+    Display a single image with all transformations applied
+    and plot a color histogram.
+
+    Args:
+        path (str): Path to the input image.
+    """
     img, _, _ = pcv.readimage(filename=path)
 
     results = {
@@ -152,12 +194,30 @@ def process_image(path):
 
 
 def preprocess_img(img):
+    """
+    Convert an image to grayscale (LAB 'a' channel) and apply Gaussian blur.
+
+    Args:
+        img (numpy.ndarray): Input RGB image.
+
+    Returns:
+        numpy.ndarray: Blurred grayscale image.
+    """
     gray = pcv.rgb2gray_lab(rgb_img=img, channel='a')
     blurred = pcv.gaussian_blur(img=gray, ksize=(11, 11), sigma_x=0)
     return blurred
 
 
 def get_mask(img):
+    """
+    Generate a binary mask for the image and filter it using a rectangular ROI.
+
+    Args:
+        img (numpy.ndarray): Input RGB image.
+
+    Returns:
+        numpy.ndarray: Masked image with ROI filtering applied.
+    """
     blurred = preprocess_img(img)
     binary = pcv.threshold.binary(
         gray_img=blurred,
@@ -170,10 +230,28 @@ def get_mask(img):
 
 
 def transform_blur(img):
+    """
+    Apply Gaussian blur to an image.
+
+    Args:
+        img (numpy.ndarray): Input RGB image.
+
+    Returns:
+        numpy.ndarray: Blurred image.
+    """
     return preprocess_img(img)
 
 
 def transform_mask(img):
+    """
+    Apply a binary mask to an image, highlighting objects of interest.
+
+    Args:
+        img (numpy.ndarray): Input RGB image.
+
+    Returns:
+        numpy.ndarray: Masked image with background set to white.
+    """
     blurred = preprocess_img(img)
     binary = pcv.threshold.binary(
         gray_img=blurred,
@@ -184,6 +262,16 @@ def transform_mask(img):
 
 
 def transform_roi(img):
+    """
+    Highlight the Region of Interest (ROI) in the image.
+
+    Args:
+        img (numpy.ndarray): Input RGB image.
+
+    Returns:
+        numpy.ndarray: Image with ROI outlined in blue
+                       and masked areas in green.
+    """
     kept_mask = get_mask(img)
     roi_img = img.copy()
     cv2.rectangle(roi_img, (5, 5), (250, 250), (255, 0, 0), 2)
@@ -192,10 +280,29 @@ def transform_roi(img):
 
 
 def transform_analyze(img):
+    """
+    Analyze object size using the masked ROI.
+
+    Args:
+        img (numpy.ndarray): Input RGB image.
+
+    Returns:
+        dict or numpy.ndarray: Output of PlantCV's analyze.size() function.
+    """
     return pcv.analyze.size(img=img, labeled_mask=get_mask(img))
 
 
 def transform_pseudolandmarks(img):
+    """
+    Draw pseudolandmarks along the x-axis of the masked ROI.
+
+    Args:
+        img (numpy.ndarray): Input RGB image.
+
+    Returns:
+        numpy.ndarray: Image annotated with top (red),
+                       bottom (blue), and center (yellow) pseudolandmarks.
+    """
     kept_mask = get_mask(img)
     top, bottom, center = pcv.homology.x_axis_pseudolandmarks(
         img=img, mask=kept_mask
@@ -214,6 +321,12 @@ def transform_pseudolandmarks(img):
 
 
 def plot_histogram(img):
+    """
+    Plot RGB, HSV, and LAB color histograms for an image.
+
+    Args:
+        img (numpy.ndarray): Input RGB image.
+    """
     total_pixels = img.shape[0] * img.shape[1]
 
     plt.figure(figsize=(8, 6))
@@ -252,9 +365,14 @@ def plot_histogram(img):
 if __name__ == "__main__":
     args = parse_arguments()
 
-    if args.image:
-        process_image(args.image)
-    elif args.src and args.dst:
-        process_directory(args.src, args.dst, args)
-    else:
-        print("Invalid usage.")
+    try:
+        if args.image:
+            process_image(args.image)
+        elif args.src and args.dst:
+            process_directory(args.src, args.dst, args)
+        else:
+            print("Invalid usage.")
+
+    except Exception as error:
+        print(error)
+        exit(1)
