@@ -1,0 +1,43 @@
+{
+  "a86dd8dc2c0e9b9d6c5291c1c08d10fe": {
+    "overall_accuracy": 0.950702489524279,
+    "class_accuracies": {
+      "Grape_Black_rot": 0.9202037351443124,
+      "Grape_Esca": 0.934876989869754,
+      "Grape_healthy": 0.9691943127962085,
+      "Grape_spot": 0.9972093023255814
+    },
+    "class_names": [
+      "Grape_Black_rot",
+      "Grape_Esca",
+      "Grape_healthy",
+      "Grape_spot"
+    ],
+    "confusion_matrix": [
+      [
+        1084,
+        26,
+        0,
+        68
+      ],
+      [
+        11,
+        1292,
+        0,
+        79
+      ],
+      [
+        1,
+        0,
+        409,
+        12
+      ],
+      [
+        1,
+        0,
+        2,
+        1072
+      ]
+    ]
+  }
+}
