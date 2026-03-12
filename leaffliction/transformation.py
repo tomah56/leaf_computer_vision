@@ -68,7 +68,7 @@ def process_image(path):
         "Pseudolandmarks": transform_pseudolandmarks(img),
     }
 
-    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+    fig1, axes = plt.subplots(2, 3, figsize=(15, 10))
 
     for ax, (title, result) in zip(axes.flatten(), results.items()):
         if result.ndim == 2:
@@ -78,7 +78,8 @@ def process_image(path):
         ax.set_title(title)
         ax.axis("off")
 
-    plt.tight_layout()
+    fig1.tight_layout()
+    plot_histogram(img)
     plt.show()
 
 def transform_blur(img):
@@ -128,6 +129,42 @@ def transform_pseudolandmarks(img):
     for pt in center:
         cv2.circle(landmark_img, (int(pt[0][0]), int(pt[0][1])), 4, (0, 255, 255), -1)
     return landmark_img
+
+
+def plot_histogram(img):
+    total_pixels = img.shape[0] * img.shape[1]
+
+    plt.figure(figsize=(8,6))
+
+    # RGB
+    colors = {'blue':0, 'green':1, 'red':2}
+    for name, i in colors.items():
+        hist = cv2.calcHist([img],[i],None,[256],[0,256]).flatten()
+        hist = (hist / total_pixels) * 100
+        plt.plot(hist, label=name)
+
+    # HSV
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    hsv_channels = {'hue':0, 'saturation':1, 'value':2}
+    for name, i in hsv_channels.items():
+        hist = cv2.calcHist([hsv],[i],None,[256],[0,256]).flatten()
+        hist = (hist / total_pixels) * 100
+        plt.plot(hist, label=name)
+
+    # LAB
+    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+    lab_channels = {'lightness':0, 'green-magenta':1, 'blue-yellow':2}
+    for name, i in lab_channels.items():
+        hist = cv2.calcHist([lab],[i],None,[256],[0,256]).flatten()
+        hist = (hist / total_pixels) * 100
+        plt.plot(hist, label=name)
+
+    plt.xlabel("Pixel intensity")
+    plt.ylabel("Proportion of pixels (%)")
+    plt.title("Color histogram")
+    plt.xlim([0,255])
+    plt.legend()
+    plt.grid(True)
 
 
 if __name__ == "__main__":
