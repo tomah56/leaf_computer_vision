@@ -1,6 +1,6 @@
 {
     "model": "model_images_modified.pth",
-    "folder": "images",
+    "folder": "images_modified",
     "images": [
         "test_images/grape/Grape_healthy/image (109).JPG",
         "test_images/grape/Grape_Black_rot/image (1122).JPG",
