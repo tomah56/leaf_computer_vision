@@ -1,14 +1,14 @@
 {
-    "model": "model_images.pth",
+    "model": "model_images_modified.pth",
     "folder": "images",
     "images": [
-        "images/grape/Grape_healthy/image (13).JPG",
-        "images/grape/Grape_Black_rot/image (16).JPG",
-        "images/grape/Grape_Esca/image (10).JPG",
-        "images/grape/Grape_spot/image (13).JPG",
-        "images/apple/Apple_scab/image (7).JPG",
-        "images/apple/Apple_healthy/image (10).JPG",
-        "images/apple/Apple_Black_rot/image (3).JPG",
-        "images/apple/Apple_rust/image (23).JPG"
+        "test_images/grape/Grape_healthy/image (109).JPG",
+        "test_images/grape/Grape_Black_rot/image (1122).JPG",
+        "test_images/grape/Grape_Esca/image (1181).JPG",
+        "test_images/grape/Grape_spot/image (1017).JPG",
+        "test_images/apple/Apple_scab/image (154).JPG",
+        "test_images/apple/Apple_healthy/image (106).JPG",
+        "test_images/apple/Apple_Black_rot/image (136).JPG",
+        "test_images/apple/Apple_rust/image (138).JPG"
     ]
 }

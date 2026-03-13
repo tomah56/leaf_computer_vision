@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.10
 import argparse
 import sys
 from pathlib import Path
@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader, Subset, WeightedRandomSampler
 from torchvision import datasets, models
 from torchvision.models import ResNet18_Weights
 
-from transformation import get_transforms
+from core.transforms_utils import get_transforms
 
 
 epochs = 2

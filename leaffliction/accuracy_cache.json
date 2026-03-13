@@ -103,5 +103,110 @@
         1075
       ]
     ]
+  },
+  "ea5c71c1a241a6b23979086618a4eb2c": {
+    "overall_accuracy": 0.9851821077413101,
+    "class_accuracies": {
+      "Apple_Black_rot": 0.9806451612903225,
+      "Apple_healthy": 0.974390243902439,
+      "Apple_rust": 1.0,
+      "Apple_scab": 0.9920508744038156,
+      "Grape_Black_rot": 0.9915110356536503,
+      "Grape_Esca": 0.9949348769898697,
+      "Grape_healthy": 1.0,
+      "Grape_spot": 0.9711627906976744
+    },
+    "class_names": [
+      "Apple_Black_rot",
+      "Apple_healthy",
+      "Apple_rust",
+      "Apple_scab",
+      "Grape_Black_rot",
+      "Grape_Esca",
+      "Grape_healthy",
+      "Grape_spot"
+    ],
+    "confusion_matrix": [
+      [
+        608,
+        4,
+        0,
+        8,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1598,
+        0,
+        41,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        275,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        1,
+        3,
+        624,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        5,
+        0,
+        0,
+        0,
+        1168,
+        5,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        6,
+        1375,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        422,
+        0
+      ],
+      [
+        0,
+        0,
+        14,
+        0,
+        16,
+        0,
+        1,
+        1044
+      ]
+    ]
   }
 }

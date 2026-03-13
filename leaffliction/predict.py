@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.10
 """Prediction script for leaf disease classification."""
 
 import json
@@ -6,7 +6,7 @@ import argparse
 
 from core.model import load_model
 from core.plotting import visualize_prediction, visualize_accuracy
-from transformation import get_transforms, MEAN, STD
+from core.transforms_utils import get_transforms, MEAN, STD
 
 
 if __name__ == "__main__":
