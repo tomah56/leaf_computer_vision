@@ -212,6 +212,8 @@ leaffliction/images/
 
 # Ignore training images dataset
 images/
+images_modified/
+test_images/
 
 # Python cache
 __pycache__/
