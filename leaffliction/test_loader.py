@@ -1,9 +1,9 @@
 # test_loader.py
-import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from core.dataset import LeafDataset
-from distribution import load_dataset 
+from distribution import load_dataset
+
 # -----------------------------
 # 1. Load dataset dictionary
 # -----------------------------
@@ -32,7 +32,8 @@ loader = DataLoader(leaf_dataset, batch_size=4, shuffle=True)
 # -----------------------------
 images, labels = next(iter(loader))
 
-print(f"Images batch shape: {images.shape}")  # should be [batch_size, 3, 224, 224]
+# should be [batch_size, 3, 224, 224]
+print(f"Images batch shape: {images.shape}")
 print(f"Labels batch: {labels}")              # should be integers
 
 # -----------------------------
