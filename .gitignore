@@ -215,6 +215,8 @@ images/
 images_modified/
 test_images/
 
+*.zip
+
 # Python cache
 __pycache__/
 *.pyc
