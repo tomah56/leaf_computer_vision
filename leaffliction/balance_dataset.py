@@ -30,7 +30,7 @@ from PIL import Image
 from augmentation import augmentations
 
 
-# ── constants ────────────────────────────────────────────────────────────────
+# constants
 
 MAX_IMAGES = 600
 TEST_PER_CLASS = 10
@@ -40,11 +40,12 @@ IMAGE_EXTENSIONS = {
     '.gif', '.bmp', '.tiff', '.webp',
 }
 
-# Augmentation pool – built from the shared augmentations dict in augmentation.py.
+# Augmentation pool
+# built from the shared augmentations dict in augmentation.py
 AUGMENTATIONS = list(augmentations.values())
 
 
-# ── helpers ───────────────────────────────────────────────────────────────────
+# helpers
 
 
 def is_valid_image(filepath):
@@ -173,7 +174,7 @@ def augment_to_target(
     return aug_saved
 
 
-# ── main pipeline ─────────────────────────────────────────────────────────────
+# main pipeline
 
 
 def process_dataset(input_dir):
@@ -248,8 +249,7 @@ def process_dataset(input_dir):
     print(f"  test_images     -> {test_dir}")
 
 
-# ── entry point ───────────────────────────────────────────────────────────────
-
+# entry point
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

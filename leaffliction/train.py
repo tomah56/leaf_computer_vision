@@ -1,12 +1,11 @@
 #!/usr/bin/env python3.10
 import argparse
-import sys
 from pathlib import Path
 
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader, Subset, WeightedRandomSampler
-from torchvision import datasets, models
+from torchvision import models
 from torchvision.models import ResNet18_Weights
 
 from core.transforms_utils import get_transforms
@@ -22,242 +21,245 @@ seed = 42
 
 
 def stratified_split(targets, split_ratio, rng_seed):
-	class_indices = {}
-	for idx, label in enumerate(targets):
-		class_indices.setdefault(label, []).append(idx)
+    class_indices = {}
+    for idx, label in enumerate(targets):
+        class_indices.setdefault(label, []).append(idx)
 
-	generator = torch.Generator().manual_seed(rng_seed)
-	train_indices = []
-	val_indices = []
+    generator = torch.Generator().manual_seed(rng_seed)
+    train_indices = []
+    val_indices = []
 
-	for _, indices in class_indices.items():
-		if len(indices) <= 1:
-			train_indices.extend(indices)
-			continue
+    for _, indices in class_indices.items():
+        if len(indices) <= 1:
+            train_indices.extend(indices)
+            continue
 
-		perm = torch.randperm(len(indices), generator=generator).tolist()
-		shuffled = [indices[i] for i in perm]
-		raw_val_count = int(len(indices) * split_ratio)
-		val_count = max(1, min(len(indices) - 1, raw_val_count))
-		val_indices.extend(shuffled[:val_count])
-		train_indices.extend(shuffled[val_count:])
+        perm = torch.randperm(len(indices), generator=generator).tolist()
+        shuffled = [indices[i] for i in perm]
+        raw_val_count = int(len(indices) * split_ratio)
+        val_count = max(1, min(len(indices) - 1, raw_val_count))
+        val_indices.extend(shuffled[:val_count])
+        train_indices.extend(shuffled[val_count:])
 
-	return train_indices, val_indices
+    return train_indices, val_indices
 
 
 def find_leaf_class_folders(data_dir):
-	"""Find all leaf folders containing images and return a mapping."""
-	from pathlib import Path
-	import os
-	
-	image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
-	leaf_folders = []
-	
-	for root, dirs, files in os.walk(str(data_dir)):
-		# Check if this folder contains image files
-		has_images = any(
-			Path(f).suffix.lower() in image_extensions 
-			for f in files
-		)
-		if has_images:
-			leaf_folders.append(Path(root))
-	
-	return sorted(leaf_folders)
+    """Find all leaf folders containing images and return a mapping."""
+    from pathlib import Path
+    import os
+
+    image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
+    leaf_folders = []
+
+    for root, dirs, files in os.walk(str(data_dir)):
+        # Check if this folder contains image files
+        has_images = any(
+            Path(f).suffix.lower() in image_extensions
+            for f in files
+        )
+        if has_images:
+            leaf_folders.append(Path(root))
+
+    return sorted(leaf_folders)
 
 
 def create_custom_image_dataset(leaf_folders, transform):
-	"""Create a custom dataset from leaf folders."""
-	from torch.utils.data import Dataset
-	from PIL import Image
-	
-	image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
-	
-	# Map folder paths to class indices
-	class_to_idx = {folder.name: idx for idx, folder in enumerate(leaf_folders)}
-	
-	samples = []
-	for class_idx, folder in enumerate(leaf_folders):
-		for file in sorted(folder.iterdir()):
-			if file.suffix.lower() in image_extensions:
-				samples.append((str(file), class_idx))
-	
-	class ImageDataset(Dataset):
-		def __init__(self, samples, class_to_idx, transform=None):
-			self.samples = samples
-			self.class_to_idx = class_to_idx
-			self.transform = transform
-			self.classes = sorted(class_to_idx.keys())
-			self.targets = [s[1] for s in samples]
-		
-		def __len__(self):
-			return len(self.samples)
-		
-		def __getitem__(self, idx):
-			path, label = self.samples[idx]
-			image = Image.open(path).convert('RGB')
-			if self.transform:
-				image = self.transform(image)
-			return image, label
-	
-	return ImageDataset(samples, class_to_idx, transform)
+    """Create a custom dataset from leaf folders."""
+    from torch.utils.data import Dataset
+    from PIL import Image
+
+    image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
+
+    # Map folder paths to class indices
+    class_to_idx = {
+        folder.name: idx for idx,
+        folder in enumerate(leaf_folders)
+    }
+
+    samples = []
+    for class_idx, folder in enumerate(leaf_folders):
+        for file in sorted(folder.iterdir()):
+            if file.suffix.lower() in image_extensions:
+                samples.append((str(file), class_idx))
+
+    class ImageDataset(Dataset):
+        def __init__(self, samples, class_to_idx, transform=None):
+            self.samples = samples
+            self.class_to_idx = class_to_idx
+            self.transform = transform
+            self.classes = sorted(class_to_idx.keys())
+            self.targets = [s[1] for s in samples]
+
+        def __len__(self):
+            return len(self.samples)
+
+        def __getitem__(self, idx):
+            path, label = self.samples[idx]
+            image = Image.open(path).convert('RGB')
+            if self.transform:
+                image = self.transform(image)
+            return image, label
+
+    return ImageDataset(samples, class_to_idx, transform)
 
 
 def main(data_dir):
-	torch.manual_seed(seed)
-	if torch.cuda.is_available():
-		torch.cuda.manual_seed_all(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
-	transform = get_transforms(train=True)
+    transform = get_transforms(train=True)
 
-	# Find all leaf folders containing images
-	leaf_folders = find_leaf_class_folders(data_dir)
-	if not leaf_folders:
-		raise ValueError("No image folders found in the dataset.")
-	
-	dataset = create_custom_image_dataset(leaf_folders, transform)
-	if len(dataset.classes) == 0:
-		raise ValueError("No classes found in the dataset.")
+    # Find all leaf folders containing images
+    leaf_folders = find_leaf_class_folders(data_dir)
+    if not leaf_folders:
+        raise ValueError("No image folders found in the dataset.")
 
-	print(
-		f"Found {len(dataset)} images across {len(dataset.classes)} "
-		f"classes: {dataset.classes}"
-	)
+    dataset = create_custom_image_dataset(leaf_folders, transform)
+    if len(dataset.classes) == 0:
+        raise ValueError("No classes found in the dataset.")
 
-	train_indices, val_indices = stratified_split(
-		dataset.targets, val_split, seed
-	)
-	train_dataset = Subset(dataset, train_indices)
-	val_dataset = Subset(dataset, val_indices)
+    print(
+        f"Found {len(dataset)} images across {len(dataset.classes)} "
+        f"classes: {dataset.classes}"
+    )
 
-	print(
-		f"Training samples: {len(train_dataset)}, "
-		f"Validation samples: {len(val_dataset)}"
-	)
+    train_indices, val_indices = stratified_split(
+        dataset.targets, val_split, seed
+    )
+    train_dataset = Subset(dataset, train_indices)
+    val_dataset = Subset(dataset, val_indices)
 
-	class_counts = torch.zeros(len(dataset.classes), dtype=torch.float)
-	for idx in train_indices:
-		class_counts[dataset.targets[idx]] += 1
+    print(
+        f"Training samples: {len(train_dataset)}, "
+        f"Validation samples: {len(val_dataset)}"
+    )
 
-	class_weights = class_counts.sum() / (class_counts * len(dataset.classes))
-	class_weights = torch.where(
-		class_counts > 0, class_weights, torch.zeros_like(class_weights)
-	)
+    class_counts = torch.zeros(len(dataset.classes), dtype=torch.float)
+    for idx in train_indices:
+        class_counts[dataset.targets[idx]] += 1
 
-	sample_weights = [
-		class_weights[dataset.targets[idx]].item() for idx in train_indices
-	]
-	sampler = WeightedRandomSampler(
-		sample_weights, num_samples=len(sample_weights), replacement=True
-	)
+    class_weights = class_counts.sum() / (class_counts * len(dataset.classes))
+    class_weights = torch.where(
+        class_counts > 0, class_weights, torch.zeros_like(class_weights)
+    )
 
-	train_loader = DataLoader(
-		train_dataset,
-		batch_size=batch_size,
-		sampler=sampler,
-		num_workers=num_workers,
-		pin_memory=torch.cuda.is_available(),
-	)
+    sample_weights = [
+        class_weights[dataset.targets[idx]].item() for idx in train_indices
+    ]
+    sampler = WeightedRandomSampler(
+        sample_weights, num_samples=len(sample_weights), replacement=True
+    )
 
-	val_loader = DataLoader(
-		val_dataset,
-		batch_size=batch_size,
-		shuffle=False,
-		num_workers=num_workers,
-		pin_memory=torch.cuda.is_available(),
-	)
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        sampler=sampler,
+        num_workers=num_workers,
+        pin_memory=torch.cuda.is_available(),
+    )
 
-	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-	model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
-	model.fc = nn.Linear(model.fc.in_features, len(dataset.classes))
-	model = model.to(device)
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=torch.cuda.is_available(),
+    )
 
-	criterion = nn.CrossEntropyLoss(weight=class_weights.to(device))
-	optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-	scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=4, gamma=0.5)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
+    model.fc = nn.Linear(model.fc.in_features, len(dataset.classes))
+    model = model.to(device)
 
-	for epoch in range(epochs):
-		# Training phase
-		model.train()
-		running_loss = 0.0
-		running_correct = 0
-		total = 0
+    criterion = nn.CrossEntropyLoss(weight=class_weights.to(device))
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=4, gamma=0.5)
 
-		for batch_idx, (images, labels) in enumerate(train_loader, start=1):
-			images = images.to(device)
-			labels = labels.to(device)
+    for epoch in range(epochs):
+        # Training phase
+        model.train()
+        running_loss = 0.0
+        running_correct = 0
+        total = 0
 
-			optimizer.zero_grad(set_to_none=True)
-			outputs = model(images)
-			loss = criterion(outputs, labels)
-			loss.backward()
-			optimizer.step()
+        for batch_idx, (images, labels) in enumerate(train_loader, start=1):
+            images = images.to(device)
+            labels = labels.to(device)
 
-			running_loss += loss.item() * images.size(0)
-			_, preds = torch.max(outputs, 1)
-			running_correct += (preds == labels).sum().item()
-			total += images.size(0)
+            optimizer.zero_grad(set_to_none=True)
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
 
-			if batch_idx % log_every == 0:
-				print(
-					f"Epoch {epoch + 1}/{epochs} - batch "
-					f"{batch_idx}/{len(train_loader)} - "
-					f"loss: {loss.item():.4f}"
-				)
+            running_loss += loss.item() * images.size(0)
+            _, preds = torch.max(outputs, 1)
+            running_correct += (preds == labels).sum().item()
+            total += images.size(0)
 
-		train_loss = running_loss / max(total, 1)
-		train_acc = running_correct / max(total, 1)
-		print(
-			f"Epoch {epoch + 1}/{epochs} - train_loss: {train_loss:.4f} - "
-			f"train_acc: {train_acc:.4f}"
-		)
+            if batch_idx % log_every == 0:
+                print(
+                    f"Epoch {epoch + 1}/{epochs} - batch "
+                    f"{batch_idx}/{len(train_loader)} - "
+                    f"loss: {loss.item():.4f}"
+                )
 
-		# Validation phase
-		model.eval()
-		val_running_loss = 0.0
-		val_running_correct = 0
-		val_total = 0
+        train_loss = running_loss / max(total, 1)
+        train_acc = running_correct / max(total, 1)
+        print(
+            f"Epoch {epoch + 1}/{epochs} - train_loss: {train_loss:.4f} - "
+            f"train_acc: {train_acc:.4f}"
+        )
 
-		with torch.no_grad():
-			for images, labels in val_loader:
-				images = images.to(device)
-				labels = labels.to(device)
+        # Validation phase
+        model.eval()
+        val_running_loss = 0.0
+        val_running_correct = 0
+        val_total = 0
 
-				outputs = model(images)
-				loss = criterion(outputs, labels)
+        with torch.no_grad():
+            for images, labels in val_loader:
+                images = images.to(device)
+                labels = labels.to(device)
 
-				val_running_loss += loss.item() * images.size(0)
-				_, preds = torch.max(outputs, 1)
-				val_running_correct += (preds == labels).sum().item()
-				val_total += images.size(0)
+                outputs = model(images)
+                loss = criterion(outputs, labels)
 
-		val_loss = val_running_loss / max(val_total, 1)
-		val_acc = val_running_correct / max(val_total, 1)
-		print(
-			f"Epoch {epoch + 1}/{epochs} - val_loss: {val_loss:.4f} - "
-			f"val_acc: {val_acc:.4f}"
-		)
+                val_running_loss += loss.item() * images.size(0)
+                _, preds = torch.max(outputs, 1)
+                val_running_correct += (preds == labels).sum().item()
+                val_total += images.size(0)
 
-		scheduler.step()
+        val_loss = val_running_loss / max(val_total, 1)
+        val_acc = val_running_correct / max(val_total, 1)
+        print(
+            f"Epoch {epoch + 1}/{epochs} - val_loss: {val_loss:.4f} - "
+            f"val_acc: {val_acc:.4f}"
+        )
 
-	folder_name = data_dir.name
-	output_file = f"model_{folder_name}.pth"
-	checkpoint = {
-		"model_state": model.state_dict(),
-		"class_to_idx": dataset.class_to_idx,
-		"arch": "resnet18",
-	}
-	torch.save(checkpoint, output_file)
-	print(f"\nModel saved to: {output_file}")
+        scheduler.step()
+
+    folder_name = data_dir.name
+    output_file = f"model_{folder_name}.pth"
+    checkpoint = {
+        "model_state": model.state_dict(),
+        "class_to_idx": dataset.class_to_idx,
+        "arch": "resnet18",
+    }
+    torch.save(checkpoint, output_file)
+    print(f"\nModel saved to: {output_file}")
 
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(
-		description="Train leaf disease classification model"
-	)
-	parser.add_argument(
-		"data_dir",
-		type=str,
-		help="Path to the image dataset directory",
-	)
-	args = parser.parse_args()
-	main(Path(args.data_dir))
+    parser = argparse.ArgumentParser(
+        description="Train leaf disease classification model"
+    )
+    parser.add_argument(
+        "data_dir",
+        type=str,
+        help="Path to the image dataset directory",
+    )
+    args = parser.parse_args()
+    main(Path(args.data_dir))
