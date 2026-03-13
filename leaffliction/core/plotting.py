@@ -9,6 +9,37 @@ from PIL import Image
 from .metrics import evaluate_model_accuracy
 
 
+def _leaf_on_white_background(rgb_image: np.ndarray) -> np.ndarray:
+    """Return image where non-leaf background is replaced with white."""
+    img = np.clip(rgb_image, 0, 1)
+
+    r = img[:, :, 0]
+    g = img[:, :, 1]
+    b = img[:, :, 2]
+
+    # Gray background has low channel spread; leaf pixels are more colorful.
+    channel_spread = np.max(img, axis=2) - np.min(img, axis=2)
+    colorful = channel_spread > 0.07
+
+    # Leaf is typically green-ish and not too dark.
+    greenish = (g > r * 1.05) & (g > b * 1.05)
+    bright_enough = img.mean(axis=2) > 0.12
+
+    mask = colorful & greenish & bright_enough
+
+    # Fallback: keep colorful non-gray regions if strict green mask is too small.
+    if mask.sum() < 150:
+        mask = colorful & bright_enough
+
+    # Final fallback to avoid empty output.
+    if mask.sum() == 0:
+        return img
+
+    output = np.ones_like(img)
+    output[mask] = img[mask]
+    return output
+
+
 def visualize_prediction(image_path: str, model, class_to_idx: dict, transform, mean, std):
     """Visualize a prediction with original and transformed images."""
     image = Image.open(image_path).convert("RGB")
@@ -26,18 +57,20 @@ def visualize_prediction(image_path: str, model, class_to_idx: dict, transform, 
     x_vis = x * std_tensor + mean_tensor
     x_vis = torch.clamp(x_vis, 0, 1)
     x_vis = x_vis.permute(1, 2, 0).cpu().numpy()
+    x_masked = _leaf_on_white_background(x_vis)
 
-    fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+    fig.suptitle(f"Image: {image_path}", fontsize=10)
     axes[0].imshow(image)
     axes[0].set_title("Original")
     axes[0].axis("off")
 
-    axes[1].imshow(x_vis)
-    axes[1].set_title("Transformed")
+    axes[1].imshow(x_masked)
+    axes[1].set_title("Transformed (masked)")
     axes[1].axis("off")
 
     fig.text(0.5, 0.02, f"Prediction: {label}", ha="center", fontsize=12)
-    plt.tight_layout(rect=[0, 0.05, 1, 1])
+    plt.tight_layout(rect=[0, 0.05, 1, 0.95])
     plt.show()
     return label
 
