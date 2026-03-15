@@ -42,16 +42,7 @@ class Dataset:
         Show pie and bar charts depending on a dataset.
         """
 
-        """
-        Show pie and bar charts depending on a dataset.
-        """
-
         fig_pie, ax_pie = plt.subplots()
-        ax_pie.pie(
-            self.chart_data.values(),
-            labels=self.chart_data.keys(),
-            autopct='%1.2f%%'
-        )
         ax_pie.pie(
             self.chart_data.values(),
             labels=self.chart_data.keys(),
@@ -67,12 +58,6 @@ class Dataset:
             self.chart_data.values(),
             color=colors
         )
-        colors = plt.cm.tab10(range(len(self.chart_data)))
-        ax_bar.bar(
-            self.chart_data.keys(),
-            self.chart_data.values(),
-            color=colors
-        )
         ax_bar.set_ylabel('Amount of images')
         ax_bar.set_title('Plant types')
         fig_bar.canvas.manager.set_window_title('Bar Chart')
@@ -81,16 +66,6 @@ class Dataset:
 
 
 def is_valid_image(filepath):
-    """
-    Check if image is valid.
-
-    Args:
-        filepath (str): path to a file
-
-    Returns:
-        bool: True if image is valid, False otherwise
-    """
-
     """
     Check if image is valid.
 
@@ -123,29 +98,17 @@ def load_dataset(root_dir) -> tuple[dict[str, list[str]], dict[str, int]]:
             dataset and chart_data
     """
 
-    """
-    Fetches images in a given directory and its subdirectories.
-
-    Args:
-        root_dir (str): root directory
-
-    Returns:
-        tuple[dict[str, list[str]], dict[str, int]]:
-            dataset and chart_data
-    """
-
     dataset: dict[str, list[str]] = {}
     chart_data: dict[str, int] = {}
 
     image_extensions = \
         {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp'}
 
-    for root, dirs, files in os.walk(root_dir):
+    for root, _, files in os.walk(root_dir):
         for file in files:
             _, ext = os.path.splitext(file)
             if ext.lower() in image_extensions:
                 if is_valid_image(join(root, file)):
-                    dir_name = os.path.basename(root).replace("_", " ")
                     dir_name = os.path.basename(root).replace("_", " ")
 
                     if root not in dataset:

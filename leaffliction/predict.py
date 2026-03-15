@@ -3,6 +3,7 @@
 
 import json
 import argparse
+from pathlib import Path
 
 from core.model import load_model
 from core.plotting import visualize_prediction, visualize_accuracy
@@ -22,13 +23,14 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    input_path = args.input
+    input_path = Path(args.input)
+    input_suffix = input_path.suffix.lower()
 
     # Determine if input is a JSON config or an image file
-    if input_path.lower().endswith('.json'):
+    if input_suffix == '.json':
         # Load configuration
-        with open(input_path, 'r') as f:
-            config = json.load(f)
+        with input_path.open('r', encoding='utf-8') as config_file:
+            config = json.load(config_file)
 
         model_path = config["model"]
         folder = config["folder"]
@@ -51,9 +53,7 @@ if __name__ == "__main__":
                 image_path, model, class_to_idx, transform, MEAN, STD
             )
 
-    elif input_path.lower().endswith(
-        ('.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG')
-    ):
+    elif input_suffix in ('.jpg', '.jpeg', '.png'):
         # Single image prediction with default model
         default_model = "model.pth"
         print(f"Loading default model: {default_model}")
@@ -62,7 +62,7 @@ if __name__ == "__main__":
         print(f"\nPredicting: {input_path}")
         transform = get_transforms(train=False)
         visualize_prediction(
-            input_path, model, class_to_idx,
+            str(input_path), model, class_to_idx,
             transform, MEAN, STD
         )
 
@@ -71,4 +71,4 @@ if __name__ == "__main__":
             "Error: Input must be a JSON file (.json) "
             "or an image file (.jpg, .jpeg, .png)."
         )
-        exit(1)
+        raise SystemExit(1)

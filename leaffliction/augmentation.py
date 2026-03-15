@@ -35,6 +35,7 @@ def augment_image(image_path):
     try:
         if not is_valid_image(image_path):
             print(f"Invalid image: {image_path}")
+            return
         image = Image.open(image_path).convert("RGB")
         relative_path = os.path.normpath(image_path)
         parts = relative_path.split(os.sep)
@@ -55,8 +56,8 @@ def augment_image(image_path):
             augmented_img.save(os.path.join(save_root, new_filename))
 
         print("Augmentations saved in:", save_root)
-    except Exception as e:
-        print(f"Error processing {image_path}: {e}")
+    except Exception as error:
+        print(f"Error processing {image_path}: {error}")
 
 
 if __name__ == "__main__":
