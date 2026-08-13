@@ -43,5 +43,3 @@ python3.10 leaffliction/predict.py config.json
 - `leaffliction/core/` — dataset, model IO, transforms, metrics, plotting helpers.
 - `tests/` — automated tests for core components.
 - `model.pth` — example/trained model checkpoint (included for convenience).
-
-If you want, I can also add a short example config file, improve the Quickstart with more flags, or run the test suite. Which would you like next?
